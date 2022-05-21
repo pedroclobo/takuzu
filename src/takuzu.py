@@ -6,7 +6,8 @@
 # 00000 Nome1
 # 00000 Nome2
 
-import sys
+from sys import stdin
+import numpy as np
 from search import (
     Problem,
     Node,
@@ -22,7 +23,7 @@ class TakuzuState:
 	state_id = 0
 
 	def __init__(self, board):
-		self.board = board
+		self.board = board.copy()
 		self.id = TakuzuState.state_id
 		TakuzuState.state_id += 1
 
@@ -35,22 +36,45 @@ class TakuzuState:
 class Board:
 	"""Representação interna de um tabuleiro de Takuzu."""
 
+	def __init__(self, board):
+		self.board = np.array(board)
+		self.dimension = len(self.board)
+
 	def get_number(self, row: int, col: int) -> int:
 		"""Devolve o valor na respetiva posição do tabuleiro."""
-		# TODO
-		pass
+		return self.board[row][col]
 
 	def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
-		"""Devolve os valores imediatamente abaixo e acima,
-        respectivamente."""
-		# TODO
-		pass
+		"""Devolve os valores imediatamente abaixo e acima, respectivamente."""
+		numbers = ()
+
+		if row != 0:
+			numbers += (self.board[row - 1][col], )
+		else:
+			numbers += (None, )
+
+		if row != self.dimension - 1:
+			numbers += (self.board[row + 1][col], )
+		else:
+			numbers += (None, )
+
+		return numbers
 
 	def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
-		"""Devolve os valores imediatamente à esquerda e à direita,
-        respectivamente."""
-		# TODO
-		pass
+		"""Devolve os valores imediatamente à esquerda e à direita, respectivamente."""
+		numbers = ()
+
+		if col != 0:
+			numbers += (self.board[row][col - 1], )
+		else:
+			numbers += (None, )
+
+		if col != self.dimension - 1:
+			numbers += (self.board[row][col + 1], )
+		else:
+			numbers += (None, )
+
+		return numbers
 
 	@staticmethod
 	def parse_instance_from_stdin():
@@ -63,8 +87,16 @@ class Board:
             > from sys import stdin
             > stdin.readline()
         """
-		# TODO
-		pass
+		dimension = int(input())
+		board = []
+
+		for i in range(dimension):
+			board += [[int(x) for x in stdin.readline().strip().split("\t")]]
+
+		return Board(board)
+
+	def copy(self):
+		return np.copy(self.board)
 
 	# TODO: outros metodos da classe
 
@@ -73,8 +105,7 @@ class Takuzu(Problem):
 
 	def __init__(self, board: Board):
 		"""O construtor especifica o estado inicial."""
-		# TODO
-		pass
+		self.state = TakuzuState(board)
 
 	def actions(self, state: TakuzuState):
 		"""Retorna uma lista de ações que podem ser executadas a
