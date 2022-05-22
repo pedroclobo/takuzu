@@ -49,8 +49,8 @@ class Board:
 
 	def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
 		"""Devolve os valores imediatamente abaixo e acima, respectivamente."""
-		first = self.board[row - 1][col] if row != 0 else None
-		sec = self.board[row + 1][col] if row != self.dimension - 1 else None
+		first = self.board[row + 1][col] if row != self.dimension - 1 else None
+		sec = self.board[row - 1][col] if row != 0 else None
 
 		return (first, sec)
 
