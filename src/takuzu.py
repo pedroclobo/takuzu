@@ -1,7 +1,3 @@
-# takuzu.py: Template para implementação do projeto de Inteligência Artificial 2021/2022.
-# Devem alterar as classes e funções neste ficheiro de acordo com as instruções do enunciado.
-# Além das funções e classes já definidas, podem acrescentar outras que considerem pertinentes.
-
 # Grupo 41:
 # 99115 Pedro Lobo
 # 99079 Guilherme Pascoal
@@ -37,25 +33,25 @@ class TakuzuState:
 
 
 class Board:
-	"""Representação interna de um tabuleiro de Takuzu."""
+	"""Internal representation of Takuzu board."""
 
 	def __init__(self, board):
 		self.board = np.array(board)
 		self.dimension = len(self.board)
 
 	def get_number(self, row: int, col: int) -> int:
-		"""Devolve o valor na respetiva posição do tabuleiro."""
+		"""Return value in given position."""
 		return self.board[row][col]
 
 	def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
-		"""Devolve os valores imediatamente abaixo e acima, respectivamente."""
+		"""Return values under and above the given position."""
 		first = self.board[row + 1][col] if row != self.dimension - 1 else None
 		sec = self.board[row - 1][col] if row != 0 else None
 
 		return (first, sec)
 
 	def adjacent_horizontal_numbers(self, row: int, col: int) -> (int, int):
-		"""Devolve os valores imediatamente à esquerda e à direita, respectivamente."""
+		"""Return values to left and to the right of the given position."""
 		first = self.board[row][col - 1] if col != 0 else None
 		sec = self.board[row][col + 1] if col != self.dimension - 1 else None
 
@@ -63,15 +59,7 @@ class Board:
 
 	@staticmethod
 	def parse_instance_from_stdin():
-		"""Lê o test do standard input (stdin) que é passado como argumento
-        e retorna uma instância da classe Board.
-
-        Por exemplo:
-            $ python3 takuzu.py < input_T01
-
-            > from sys import stdin
-            > stdin.readline()
-        """
+		"""Reads input from stdin and returns a new Board instance."""
 		dimension = int(input())
 		board = []
 
@@ -82,52 +70,48 @@ class Board:
 		return Board(board)
 
 	def copy(self):
+		"""Return copy of Board instance."""
 		return Board(self.board)
 
 	def place_number(self, row: int, col: int, number: int):
+		"""Place number on board instance."""
 		self.board[row][col] = number
 
-	def is_free_position(self, row: int, col: int):
-		return self.get_number(row, col) == 2
-
 	def get_free_positions(self):
+		"""Return coordinates of free position."""
 		positions = ()
 		for i in range(self.dimension):
 			for j in range(self.dimension):
-				if self.is_free_position(i, j):
+				if self.get_number(i, j) == 2:
 					positions += ((i, j), )
 
 		return positions
 
-	def check_numbers(self):
-		# Line check
+	def check_count_criteria(self):
+		"""Check if specified row or column has an equal amount of 0 and 1,
+		or an amount differing by 1 if the board's dimension is odd."""
 		for i in range(self.dimension):
 			zeros = np.count_nonzero(self.board[i, ] == 0)
 			ones = np.count_nonzero(self.board[i, ] == 1)
 
-			if self.dimension % 2 == 0:
-				if zeros != ones:
-					return False
-			else:
-				if zeros > ones + 1 or ones > zeros + 1:
-					return False
+			if (self.dimension % 2 == 0 and zeros != ones) or \
+               (self.dimension % 2 != 0 and \
+                   (zeros != ones + 1 or zeros + 1 != ones)):
+				return False
 
-
-        # Column check
 		for j in range(self.dimension):
 			zeros = np.count_nonzero(self.board[:, j] == 0)
 			ones = np.count_nonzero(self.board[:, j] == 1)
 
-			if self.dimension % 2 == 0:
-				if zeros != ones:
-					return False
-			else:
-				if zeros > ones + 1 or ones > zeros + 1:
-					return False
+			if (self.dimension % 2 == 0 and zeros != ones) or \
+               (self.dimension % 2 != 0 and \
+                   (zeros != ones + 1 or zeros + 1 != ones)):
+				return False
 
 		return True
 
-	def check_adjacency(self):
+	def check_adjacency_criteria(self):
+		"""Check if there aren't more than 2 adjacent numbers."""
 		for i in range(self.dimension):
 			for j in range(self.dimension):
 				number = self.get_number(i, j)
@@ -135,22 +119,25 @@ class Board:
 				adjacent_v = self.adjacent_vertical_numbers(i, j)
 
 				if (adjacent_h + (number, )).count(number) == 3 or \
-				   (adjacent_v + (number, )).count(number) == 3:
+                   (adjacent_v + (number, )).count(number) == 3:
 					return False
 
 		return True
 
-	def check_vector_difference(self):
+	def check_vector_inequality_criteria(self):
+		"""Check if all rows are different and if all columns are different."""
 		return not (self.board == self.board[0]).all() and \
-		       not (self.board.T == self.board.T[0]).all()
+               not (self.board.T == self.board.T[0]).all()
 
-	def check_finished_board(self):
-		return self.check_numbers() and \
-		       self.check_adjacency() and \
-		       self.check_vector_difference() and \
-		       2 not in self.board
+	def check_resolved_board(self):
+		"""Check if board is resolved."""
+		return self.check_count_criteria() and \
+               self.check_adjacency_criteria() and \
+               self.check_vector_inequality_criteria() and \
+               2 not in self.board
 
 	def __str__(self):
+		"""Board representation."""
 		string = ""
 
 		for i in range(self.dimension):
@@ -164,32 +151,59 @@ class Board:
 
 		return string
 
+	def is_valid_play(self, play):
+		"""Check if play respects the game rules."""
+		row, col, number = play
+		self.place_number(row, col, number)
+
+		# Check count criteria
+		zeros_r = np.count_nonzero(self.board[row, ] == 0)
+		ones_r = np.count_nonzero(self.board[row, ] == 1)
+		zeros_c = np.count_nonzero(self.board[:, col] == 0)
+		ones_c = np.count_nonzero(self.board[:, col] == 1)
+
+		if self.dimension % 2 == 0:
+			if zeros_r > self.dimension / 2 or ones_r > self.dimension / 2 or \
+               zeros_c > self.dimension / 2 or ones_c > self.dimension / 2:
+				return False
+
+		else:
+			if zeros_r > self.dimension // 2 + 1 or ones_r > self.dimension // 2 + 1 or \
+               zeros_c > self.dimension // 2 + 1 or ones_c > self.dimension // 2 + 1:
+				return False
+
+		# Check adjacency criteria
+		if self.adjacent_vertical_numbers(row, col).count(number) > 2 or \
+           self.adjacent_horizontal_numbers(row, col).count(number) > 2:
+			return False
+
+		# Check for different rows and columns
+		return self.check_vector_inequality_criteria()
+
 	# TODO: outros metodos da classe
 
 
 class Takuzu(Problem):
 
 	def __init__(self, board: Board):
-		"""O construtor especifica o estado inicial."""
+		"""Constructor specifies initial state."""
 		super().__init__(TakuzuState(board))
 		self.state = TakuzuState(board)
 
 	def actions(self, state: TakuzuState):
-		"""Retorna uma lista de ações que podem ser executadas a
-        partir do estado passado como argumento."""
+		"""Return a list of actions which can be executed from the given state."""
 		actions = ()
 
 		for (row, col) in state.get_board().get_free_positions():
 			for number in (0, 1):
-				actions += ((row, col, number), )
+				action = (row, col, number)
+				if state.get_board().is_valid_play(action):
+					actions += (action, )
 
 		return actions
 
 	def result(self, state: TakuzuState, action):
-		"""Retorna o estado resultante de executar a 'action' sobre
-        'state' passado como argumento. A ação a executar deve ser uma
-        das presentes na lista obtida pela execução de
-        self.actions(state)."""
+		"""Returns the state obtained from executing 'action' in 'state'."""
 		(row, col, number) = action
 		board = state.get_board()
 		board.place_number(row, col, number)
@@ -197,13 +211,11 @@ class Takuzu(Problem):
 		return TakuzuState(board)
 
 	def goal_test(self, state: TakuzuState):
-		"""Retorna True se e só se o estado passado como argumento é
-        um estado objetivo. Deve verificar se todas as posições do tabuleiro
-        estão preenchidas com uma sequência de números adjacentes."""
-		return state.get_board().check_finished_board()
+		"""Return True if 'state' if a goal state."""
+		return state.get_board().check_resolved_board()
 
 	def h(self, node: Node):
-		"""Função heuristica utilizada para a procura A*."""
+		"""Heuristic for A*."""
 		# TODO
 		pass
 
