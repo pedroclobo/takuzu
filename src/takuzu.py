@@ -24,7 +24,7 @@ class TakuzuState:
 		TakuzuState.state_id += 1
 
 	def __lt__(self, other):
-		return self.id < other.id
+		return len(self.board.get_free_positions()) < len(other.board.get_free_positions())
 
 	def get_board(self):
 		return self.board.copy()
@@ -41,7 +41,7 @@ class Board:
 
 	def get_number(self, row: int, col: int) -> int:
 		"""Return value in given position."""
-		return self.board[row][col]
+		return self.board[row, col]
 
 	def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
 		"""Return values under and above the given position."""
@@ -180,6 +180,9 @@ class Board:
 		# Check for different rows and columns
 		return self.check_vector_inequality_criteria()
 
+	def restrictions(self, row, col):
+		return len([el for el in self.adjacent_vertical_numbers(row, col) if el != None and el != 2]) + len([el for el in self.adjacent_horizontal_numbers(row, col) if el != None and el != 2])
+
 	# TODO: outros metodos da classe
 
 
@@ -191,14 +194,18 @@ class Takuzu(Problem):
 		self.state = TakuzuState(board)
 
 	def actions(self, state: TakuzuState):
-		"""Return a list of actions which can be executed from the given state."""
-		actions = ()
+		"""Return a collection of actions which can be executed from the given state."""
+		actions = []
+		board = state.get_board()
 
-		for (row, col) in state.get_board().get_free_positions():
+		for (row, col) in board.get_free_positions():
 			for number in (0, 1):
 				action = (row, col, number)
-				if state.get_board().is_valid_play(action):
-					actions += (action, )
+				if board.is_valid_play(action):
+					actions += [action, ]
+
+		# Order actions using degree heuristic
+		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]), reverse=True)
 
 		return actions
 
@@ -216,8 +223,12 @@ class Takuzu(Problem):
 
 	def h(self, node: Node):
 		"""Heuristic for A*."""
-		# TODO
-		pass
+		board = node.state.get_board()
+
+		# Number of free positions
+		h1 = len(board.get_free_positions())
+
+		return max(h1, 0)
 
 	# TODO: outros metodos da classe
 
@@ -225,10 +236,10 @@ class Takuzu(Problem):
 if __name__ == "__main__":
 	board = Board.parse_instance_from_stdin()
 
-	#node = breadth_first_tree_search(Takuzu(board))
-	node = depth_first_tree_search(Takuzu(board.copy()))
-	#node = greedy_search(Takuzu(board))
-	#node = astar_search(Takuzu(board))
+	#node = breadth_first_tree_search(Takuzu(board.copy()))
+	#node = depth_first_tree_search(Takuzu(board.copy()))
+	#node = greedy_search(Takuzu(board.copy()))
+	node = astar_search(Takuzu(board.copy()))
 
 	solution = node.solution()
 
