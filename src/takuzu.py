@@ -50,12 +50,21 @@ class Board:
 		self.board = np.array(board)
 		self.dimension = len(self.board)
 
-		# Compute free positions
-		self.free = []
-		for i in range(self.dimension):
-			for j in range(self.dimension):
-				if self.get_number(i, j) == 2:
-					self.free.append((i, j))
+	def initialize(self):
+		"""Check for deductible plays on board ( (1, 2, 1) -> (1, 0, 1) )."""
+		updated = True
+
+		while updated:
+			updated = False
+			for i in range(self.dimension):
+				for j in range(self.dimension):
+					if self.get_number(i, j) == 2:
+						if self.adjacent_horizontal_numbers(i, j).count(0) == 2 or self.adjacent_vertical_numbers(i, j).count(0) == 2:
+							self.place_number(i, j, 1)
+							updated = True
+						elif self.adjacent_horizontal_numbers(i, j).count(1) == 2 or self.adjacent_vertical_numbers(i, j).count(1) == 2:
+							self.place_number(i, j, 0)
+							updated = True
 
 	def get_number(self, row: int, col: int) -> int:
 		"""Return value in given position."""
@@ -94,11 +103,17 @@ class Board:
 	def place_number(self, row: int, col: int, number: int):
 		"""Place number on board instance."""
 		self.board[row][col] = number
-		self.free = [el for el in self.free if el != (row, col)]
 
 	def get_free_positions(self):
 		"""Return coordinates of free position."""
-		return self.free
+		positions = []
+
+		for i in range(self.dimension):
+			for j in range(self.dimension):
+				if self.get_number(i, j) == 2:
+					positions.append((i, j))
+
+		return positions
 
 	def check_count_criteria(self):
 		"""Check if specified row or column has an equal amount of 0 and 1,
@@ -197,7 +212,7 @@ class Board:
 		return self.check_vector_inequality_criteria()
 
 	def is_full(self):
-		return len(self.free) == 0
+		return np.count_nonzero(self.board == 2) == 0
 
 	def restrictions(self, row, col):
 		return len([el for el in self.adjacent_vertical_numbers(row, col) if el != None and el != 2]) + \
@@ -255,6 +270,7 @@ class Takuzu(Problem):
 
 if __name__ == "__main__":
 	board = Board.parse_instance_from_stdin()
+	board.initialize()
 
 	searchers = [
 	    astar_search,
@@ -267,15 +283,15 @@ if __name__ == "__main__":
 	    uniform_cost_search
 	]
 
-	compare_searchers([Takuzu(board)], "", searchers)
+	#compare_searchers([Takuzu(board)], "", searchers)
 
 	#node = astar_search(Takuzu(board))
 	#node = breadth_first_graph_search(Takuzu(board))
 	#node = breadth_first_tree_search(Takuzu(board))
-	#node = depth_first_graph_search(Takuzu(board))
+	node = depth_first_graph_search(Takuzu(board))
 	#node = depth_first_tree_search(Takuzu(board))
 	#node = greedy_search(Takuzu(board))
 	#node = iterative_deepening_search(Takuzu(board))
 	#node = uniform_cost_search(Takuzu(board))
 
-	#print(node.state.board)
+	print(node.state.board)
