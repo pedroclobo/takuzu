@@ -7,7 +7,6 @@ import numpy as np
 from search import (
     Problem,
     Node,
-    compare_searchers,
     astar_search,
     breadth_first_tree_search,
     depth_first_tree_search,
@@ -57,54 +56,6 @@ class Board:
 	def copy(self):
 		"""Return copy of Board instance."""
 		return Board(self.board)
-
-	def process(self):
-		"""Search for deductible plays on board ( (1, 2, 1) -> (1, 0, 1) )."""
-		updated = True
-
-		# Adjacency rule
-		while updated:
-			updated = False
-			for i in range(self.dimension):
-				for j in range(self.dimension):
-					if self.get_number(i, j) == 2:
-						if self.adjacent_horizontal_numbers(i, j).count(0) == 2 or \
-						   self.adjacent_vertical_numbers(i, j).count(0) == 2:
-							self.place_number(i, j, 1); updated = True
-						elif self.adjacent_horizontal_numbers(i, j).count(1) == 2 or \
-						     self.adjacent_vertical_numbers(i, j).count(1) == 2:
-							self.place_number(i, j, 0); updated = True
-
-					elif self.get_number(i, j) == 0:
-						if self.adjacent_horizontal_numbers(i, j) == (2, 0):
-							self.place_number(i, j - 1, 1); updated = True
-						elif self.adjacent_horizontal_numbers(i, j) == (0, 2):
-							self.place_number(i, j + 1, 1); updated = True
-						elif self.adjacent_vertical_numbers(i, j) == (2, 0):
-							self.place_number(i + 1, j, 1); updated = True
-						elif self.adjacent_vertical_numbers(i, j) == (0, 2):
-							self.place_number(i - 1, j, 1); updated = True
-
-					elif self.get_number(i, j) == 1:
-						if self.adjacent_horizontal_numbers(i, j) == (2, 1):
-							self.place_number(i, j - 1, 0); updated = True
-						elif self.adjacent_horizontal_numbers(i, j) == (1, 2):
-							self.place_number(i, j + 1, 0); updated = True
-						elif self.adjacent_vertical_numbers(i, j) == (2, 1):
-							self.place_number(i + 1, j, 0); updated = True
-						elif self.adjacent_vertical_numbers(i, j) == (1, 2):
-							self.place_number(i - 1, j, 0); updated = True
-
-			# Equality rule
-			for i in range(self.dimension):
-				for j in range(self.dimension):
-					if self.get_number(i, j) == 2:
-						if self.vector_count(i, 0, True) == self.dimension / 2 or \
-						   self.vector_count(j, 0, False) == self.dimension / 2:
-							self.place_number(i, j, 1)
-						elif self.vector_count(i, 1, True) == self.dimension / 2 or \
-						     self.vector_count(j, 1, False) == self.dimension / 2:
-							self.place_number(i, j, 0)
 
 	def get_number(self, row: int, col: int) -> int:
 		"""Return value in given position."""
@@ -257,8 +208,61 @@ class Takuzu(Problem):
 
 	def actions(self, state: TakuzuState):
 		"""Return a collection of actions which can be executed from the given state."""
+
+		def infer_number(board, row, col):
+			if board.adjacent_horizontal_numbers(row, col).count(0) == 2 or \
+			   board.adjacent_vertical_numbers(row, col).count(0) == 2:
+				return 1
+			elif board.adjacent_horizontal_numbers(row, col).count(1) == 2 or \
+			     board.adjacent_vertical_numbers(row, col).count(1) == 2:
+				return 0
+
+			if board.vector_count(row, 0, True) >= board.dimension / 2 or \
+			   board.vector_count(col, 0, False) >= board.dimension / 2:
+				return 1
+			elif board.vector_count(row, 1, True) >= board.dimension / 2 or \
+			     board.vector_count(col, 1, False) >= board.dimension / 2:
+				return 0
+
+			for i in range(board.dimension):
+				for j in range(board.dimension):
+					if board.get_number(i, j) == 0:
+						if board.adjacent_horizontal_numbers(i, j) == (2, 0):
+							if (i, j - 1) == (row, col):
+								return 1
+						elif board.adjacent_horizontal_numbers(i, j) == (0, 2):
+							if (i, j + 1) == (row, col):
+								return 1
+						elif board.adjacent_vertical_numbers(i, j) == (2, 0):
+							if (i + 1, j) == (row, col):
+								return 1
+						elif board.adjacent_vertical_numbers(i, j) == (0, 2):
+							if (i - 1, j) == (row, col):
+								return 1
+
+					elif board.get_number(i, j) == 1:
+						if board.adjacent_horizontal_numbers(i, j) == (2, 1):
+							if (i, j - 1) == (row, col):
+								return 0
+						elif board.adjacent_horizontal_numbers(i, j) == (1, 2):
+							if (i, j + 1) == (row, col):
+								return 0
+						elif board.adjacent_vertical_numbers(i, j) == (2, 1):
+							if (i + 1, j) == (row, col):
+								return 0
+						elif board.adjacent_vertical_numbers(i, j) == (1, 2):
+							if (i - 1, j) == (row, col):
+								return 0
+
+			return None
+
 		actions = []
 		board = state.get_board()
+
+		for (row, col) in board.free_positions():
+			number = infer_number(board, row, col)
+			if number != None:
+				return [(row, col, number)]
 
 		for (row, col) in board.free_positions():
 			for number in (0, 1):
@@ -267,8 +271,8 @@ class Takuzu(Problem):
 					actions.append(action)
 
 		# Degree heuristic
-		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
-		             reverse=True)
+		#actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
+		             #reverse=True)
 
 		return actions
 
@@ -293,12 +297,6 @@ class Takuzu(Problem):
 
 if __name__ == "__main__":
 	board = Board.parse_instance_from_stdin()
-	board.process()
-	resolved = False
-
-	if board.check_resolved_board():
-		print(board)
-		resolved = True
 
 	searchers = [
 	    astar_search,
@@ -307,12 +305,6 @@ if __name__ == "__main__":
 	    greedy_search,
 	]
 
-	#compare_searchers([Takuzu(board)], "", searchers)
+	node = depth_first_tree_search(Takuzu(board))
 
-	if not resolved:
-		#node = astar_search(Takuzu(board))
-		#node = breadth_first_tree_search(Takuzu(board))
-		node = depth_first_tree_search(Takuzu(board))
-		#node = greedy_search(Takuzu(board))
-
-		print(node.state.board)
+	print(node.state.board)
