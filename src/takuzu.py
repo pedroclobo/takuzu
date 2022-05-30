@@ -238,35 +238,37 @@ class Takuzu(Problem):
 		tup = (1, 0)
 		for i in range(board.dimension):
 			row = board.get_row(i)
-			for j in range(board.dimension):
-				row_comp = board.get_row(j)
-				comp = (row == row_comp)
-				if np.count_nonzero(comp == False) == 1:
-					position = np.where(comp == False)[0][0]
-					number = row_comp[position]
+			if np.count_nonzero(row == 2) == 1:
+				for j in range(board.dimension):
+					row_comp = board.get_row(j)
+					comp = (row == row_comp)
+					if np.count_nonzero(comp == False) == 1:
+						position = np.where(comp == False)[0][0]
+						number = row_comp[position]
 
-					if number == 2:
-						number = tup[row[position]]
-						return [(j, position, number)]
-					elif row[position] == 2:
-						number = tup[row_comp[position]]
-						return [(i, position, number)]
+						if number == 2:
+							number = tup[row[position]]
+							return [(j, position, number)]
+						elif row[position] == 2:
+							number = tup[row_comp[position]]
+							return [(i, position, number)]
 
 		for i in range(board.dimension):
 			col = board.get_col(i)
-			for j in range(board.dimension):
-				col_comp = board.get_col(j)
-				comp = (col == col_comp)
-				if np.count_nonzero(comp == False) == 1:
-					position = np.where(comp == False)[0][0]
-					number = col_comp[position]
+			if np.count_nonzero(col == 2) == 1:
+				for j in range(board.dimension):
+					col_comp = board.get_col(j)
+					comp = (col == col_comp)
+					if np.count_nonzero(comp == False) == 1:
+						position = np.where(comp == False)[0][0]
+						number = col_comp[position]
 
-					if number == 2:
-						number = tup[col[position]]
-						return [(position, j, number)]
-					elif col[position] == 2:
-						number = tup[col_comp[position]]
-						return [(position, i, number)]
+						if number == 2:
+							number = tup[col[position]]
+							return [(position, j, number)]
+						elif col[position] == 2:
+							number = tup[col_comp[position]]
+							return [(position, i, number)]
 
 		for i in range(board.dimension):
 			for j in range(board.dimension):
