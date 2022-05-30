@@ -95,6 +95,12 @@ class Board:
 
 		return positions
 
+	def get_row(self, index):
+		return self.board[index, ]
+
+	def get_col(self, index):
+		return self.board[:, index]
+
 	@staticmethod
 	def parse_instance_from_stdin():
 		"""Reads input from stdin and returns a new Board instance."""
@@ -224,45 +230,71 @@ class Takuzu(Problem):
 			     board.vector_count(col, 1, False) >= board.dimension / 2:
 				return 0
 
-			for i in range(board.dimension):
-				for j in range(board.dimension):
-					if board.get_number(i, j) == 0:
-						if board.adjacent_horizontal_numbers(i, j) == (2, 0):
-							if (i, j - 1) == (row, col):
-								return 1
-						elif board.adjacent_horizontal_numbers(i, j) == (0, 2):
-							if (i, j + 1) == (row, col):
-								return 1
-						elif board.adjacent_vertical_numbers(i, j) == (2, 0):
-							if (i + 1, j) == (row, col):
-								return 1
-						elif board.adjacent_vertical_numbers(i, j) == (0, 2):
-							if (i - 1, j) == (row, col):
-								return 1
-
-					elif board.get_number(i, j) == 1:
-						if board.adjacent_horizontal_numbers(i, j) == (2, 1):
-							if (i, j - 1) == (row, col):
-								return 0
-						elif board.adjacent_horizontal_numbers(i, j) == (1, 2):
-							if (i, j + 1) == (row, col):
-								return 0
-						elif board.adjacent_vertical_numbers(i, j) == (2, 1):
-							if (i + 1, j) == (row, col):
-								return 0
-						elif board.adjacent_vertical_numbers(i, j) == (1, 2):
-							if (i - 1, j) == (row, col):
-								return 0
-
 			return None
 
 		actions = []
 		board = state.get_board()
 
-		for (row, col) in board.free_positions():
-			number = infer_number(board, row, col)
-			if number != None:
-				return [(row, col, number)]
+		tup = (1, 0)
+		for i in range(board.dimension):
+			row = board.get_row(i)
+			for j in range(board.dimension):
+				row_comp = board.get_row(j)
+				comp = (row == row_comp)
+				if np.count_nonzero(comp == False) == 1:
+					position = np.where(comp == False)[0][0]
+					number = row_comp[position]
+
+					if number == 2:
+						number = tup[row[position]]
+						return [(j, position, number)]
+					elif row[position] == 2:
+						number = tup[row_comp[position]]
+						return [(i, position, number)]
+
+		for i in range(board.dimension):
+			col = board.get_col(i)
+			for j in range(board.dimension):
+				col_comp = board.get_col(j)
+				comp = (col == col_comp)
+				if np.count_nonzero(comp == False) == 1:
+					position = np.where(comp == False)[0][0]
+					number = col_comp[position]
+
+					if number == 2:
+						number = tup[col[position]]
+						return [(position, j, number)]
+					elif col[position] == 2:
+						number = tup[col_comp[position]]
+						return [(position, i, number)]
+
+		for i in range(board.dimension):
+			for j in range(board.dimension):
+				if board.get_number(i, j) == 0:
+					if board.adjacent_horizontal_numbers(i, j) == (2, 0):
+						return [(i, j - 1, 1)]
+					elif board.adjacent_horizontal_numbers(i, j) == (0, 2):
+						return [(i, j + 1, 1)]
+					elif board.adjacent_vertical_numbers(i, j) == (2, 0):
+						return [(i + 1, j, 1)]
+					elif board.adjacent_vertical_numbers(i, j) == (0, 2):
+						return [(i - 1, j, 1)]
+
+				elif board.get_number(i, j) == 1:
+					if board.adjacent_horizontal_numbers(i, j) == (2, 1):
+						return [(i, j - 1, 0)]
+					elif board.adjacent_horizontal_numbers(i, j) == (1, 2):
+						return [(i, j + 1, 0)]
+					elif board.adjacent_vertical_numbers(i, j) == (2, 1):
+						return [(i + 1, j, 0)]
+					elif board.adjacent_vertical_numbers(i, j) == (1, 2):
+						return [(i - 1, j, 0)]
+
+				elif board.get_number(i, j) == 2:
+					number = infer_number(board, i, j)
+					if number != None:
+						return [(i, j, number)]
+
 
 		for (row, col) in board.free_positions():
 			for number in (0, 1):
@@ -271,8 +303,8 @@ class Takuzu(Problem):
 					actions.append(action)
 
 		# Degree heuristic
-		#actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
-		             #reverse=True)
+		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
+		             reverse=True)
 
 		return actions
 
