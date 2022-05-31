@@ -113,10 +113,10 @@ class Board:
 
 		return Board(board)
 
-	def uniqueness_rule(self):
-		"""Check if all rows are different and if all columns are different."""
-		return len(np.unique(self.board, axis=0)) == self.dimension and \
-		       len(np.unique(self.board.T, axis=0)) == self.dimension
+	def local_uniqueness_rule(self, row, col):
+		return np.sum(np.all(np.equal(self.board, self.board[row]), axis=1)) and \
+		       np.sum(np.all(np.equal(self.board.T, self.board.T[col]), axis=1))
+
 
 	def check_resolved_board(self):
 		"""Check if board is resolved."""
@@ -166,8 +166,13 @@ class Board:
 
 			return True
 
+		def uniqueness_rule(board):
+			"""Check if all rows are different and if all columns are different."""
+			return len(np.unique(board.board, axis=0)) == board.dimension and \
+	     	       len(np.unique(board.board.T, axis=0)) == board.dimension
+
 		return is_full(self) and equality_rule(self) and \
-               adjacency_rule(self) and self.uniqueness_rule()
+               adjacency_rule(self) and uniqueness_rule(self)
 
 	def is_valid_play(self, play):
 		"""Check if play respects the game rules."""
@@ -196,7 +201,7 @@ class Board:
 			return False
 
 		# Uniqueness rule
-		return self.uniqueness_rule()
+		return self.local_uniqueness_rule(row, col)
 
 	def restrictions(self, row, col):
 		return len([el for el in self.adjacent_vertical_numbers(row, col) if el != None and el != 2]) + \
@@ -235,41 +240,6 @@ class Takuzu(Problem):
 		actions = []
 		board = state.get_board()
 
-		tup = (1, 0)
-		for i in range(board.dimension):
-			row = board.get_row(i)
-			if np.count_nonzero(row == 2) == 1:
-				for j in range(board.dimension):
-					row_comp = board.get_row(j)
-					comp = (row == row_comp)
-					if np.count_nonzero(comp == False) == 1:
-						position = np.where(comp == False)[0][0]
-						number = row_comp[position]
-
-						if number == 2:
-							number = tup[row[position]]
-							return [(j, position, number)]
-						elif row[position] == 2:
-							number = tup[row_comp[position]]
-							return [(i, position, number)]
-
-		for i in range(board.dimension):
-			col = board.get_col(i)
-			if np.count_nonzero(col == 2) == 1:
-				for j in range(board.dimension):
-					col_comp = board.get_col(j)
-					comp = (col == col_comp)
-					if np.count_nonzero(comp == False) == 1:
-						position = np.where(comp == False)[0][0]
-						number = col_comp[position]
-
-						if number == 2:
-							number = tup[col[position]]
-							return [(position, j, number)]
-						elif col[position] == 2:
-							number = tup[col_comp[position]]
-							return [(position, i, number)]
-
 		for i in range(board.dimension):
 			for j in range(board.dimension):
 				if board.get_number(i, j) == 0:
@@ -297,6 +267,40 @@ class Takuzu(Problem):
 					if number != None:
 						return [(i, j, number)]
 
+#		tup = (1, 0)
+#		for i in range(board.dimension):
+#			row = board.get_row(i)
+#			if np.count_nonzero(row == 2) == 1:
+#				for j in range(board.dimension):
+#					row_comp = board.get_row(j)
+#					comp = (row == row_comp)
+#					if np.count_nonzero(comp == False) == 1:
+#						position = np.where(comp == False)[0][0]
+#						number = row_comp[position]
+#
+#						if number == 2:
+#							number = tup[row[position]]
+#							return [(j, position, number)]
+#						elif row[position] == 2:
+#							number = tup[row_comp[position]]
+#							return [(i, position, number)]
+#
+#		for i in range(board.dimension):
+#			col = board.get_col(i)
+#			if np.count_nonzero(col == 2) == 1:
+#				for j in range(board.dimension):
+#					col_comp = board.get_col(j)
+#					comp = (col == col_comp)
+#					if np.count_nonzero(comp == False) == 1:
+#						position = np.where(comp == False)[0][0]
+#						number = col_comp[position]
+#
+#						if number == 2:
+#							number = tup[col[position]]
+#							return [(position, j, number)]
+#						elif col[position] == 2:
+#							number = tup[col_comp[position]]
+#							return [(position, i, number)]
 
 		for (row, col) in board.free_positions():
 			for number in (0, 1):
@@ -305,8 +309,8 @@ class Takuzu(Problem):
 					actions.append(action)
 
 		# Degree heuristic
-		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
-		             reverse=True)
+#		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
+#		             reverse=True)
 
 		return actions
 
@@ -341,4 +345,5 @@ if __name__ == "__main__":
 
 	node = depth_first_tree_search(Takuzu(board))
 
-	print(node.state.board)
+	if node != None:
+		print(node.state.board)
