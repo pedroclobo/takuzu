@@ -7,10 +7,7 @@ import numpy as np
 from search import (
     Problem,
     Node,
-    astar_search,
-    breadth_first_tree_search,
     depth_first_tree_search,
-    greedy_search,
 )
 
 
@@ -28,13 +25,11 @@ class TakuzuState:
 	def get_board(self):
 		return self.board.copy()
 
-	# TODO: outros metodos da classe
-
 
 class Board:
 	"""Internal representation of Takuzu board."""
 
-	def __init__(self, board):
+	def __init__(self, board, free_positions=None):
 		self.board = np.array(board)
 		self.dimension = len(self.board)
 
@@ -86,20 +81,8 @@ class Board:
 
 	def free_positions(self):
 		"""Return coordinates of free position."""
-		positions = ()
-
-		for i in range(self.dimension):
-			for j in range(self.dimension):
-				if self.get_number(i, j) == 2:
-					positions += ((i, j), )
-
-		return positions
-
-	def get_row(self, index):
-		return self.board[index, ]
-
-	def get_col(self, index):
-		return self.board[:, index]
+		(row, col) = np.where(self.board == 2)
+		return list(zip(row, col))
 
 	@staticmethod
 	def parse_instance_from_stdin():
@@ -112,11 +95,6 @@ class Board:
 			dimension -= 1
 
 		return Board(board)
-
-	def local_uniqueness_rule(self, row, col):
-		return np.sum(np.all(np.equal(self.board, self.board[row]), axis=1)) and \
-		       np.sum(np.all(np.equal(self.board.T, self.board.T[col]), axis=1))
-
 
 	def check_resolved_board(self):
 		"""Check if board is resolved."""
@@ -173,41 +151,6 @@ class Board:
 
 		return is_full(self) and equality_rule(self) and \
                adjacency_rule(self) and uniqueness_rule(self)
-
-	def is_valid_play(self, play):
-		"""Check if play respects the game rules."""
-		row, col, number = play
-		self.place_number(row, col, number)
-
-		# Equality rule
-		zeros_r = np.count_nonzero(self.board[row, ] == 0)
-		ones_r = np.count_nonzero(self.board[row, ] == 1)
-		zeros_c = np.count_nonzero(self.board[:, col] == 0)
-		ones_c = np.count_nonzero(self.board[:, col] == 1)
-
-		if self.dimension % 2 == 0:
-			if zeros_r > self.dimension / 2 or ones_r > self.dimension / 2 or \
-			   zeros_c > self.dimension / 2 or ones_c > self.dimension / 2:
-				return False
-
-		else:
-			if zeros_r > self.dimension // 2 + 1 or ones_r > self.dimension // 2 + 1 or \
-			   zeros_c > self.dimension // 2 + 1 or ones_c > self.dimension // 2 + 1:
-				return False
-
-		# Adjacency rule
-		if self.adjacent_vertical_numbers(row, col).count(number) >= 2 or \
-		   self.adjacent_horizontal_numbers(row, col).count(number) >= 2:
-			return False
-
-		# Uniqueness rule
-		return self.local_uniqueness_rule(row, col)
-
-	def restrictions(self, row, col):
-		return len([el for el in self.adjacent_vertical_numbers(row, col) if el != None and el != 2]) + \
-		       len([el for el in self.adjacent_horizontal_numbers(row, col) if el != None and el != 2])
-
-	# TODO: outros metodos da classe
 
 
 class Takuzu(Problem):
@@ -267,50 +210,10 @@ class Takuzu(Problem):
 					if number != None:
 						return [(i, j, number)]
 
-#		tup = (1, 0)
-#		for i in range(board.dimension):
-#			row = board.get_row(i)
-#			if np.count_nonzero(row == 2) == 1:
-#				for j in range(board.dimension):
-#					row_comp = board.get_row(j)
-#					comp = (row == row_comp)
-#					if np.count_nonzero(comp == False) == 1:
-#						position = np.where(comp == False)[0][0]
-#						number = row_comp[position]
-#
-#						if number == 2:
-#							number = tup[row[position]]
-#							return [(j, position, number)]
-#						elif row[position] == 2:
-#							number = tup[row_comp[position]]
-#							return [(i, position, number)]
-#
-#		for i in range(board.dimension):
-#			col = board.get_col(i)
-#			if np.count_nonzero(col == 2) == 1:
-#				for j in range(board.dimension):
-#					col_comp = board.get_col(j)
-#					comp = (col == col_comp)
-#					if np.count_nonzero(comp == False) == 1:
-#						position = np.where(comp == False)[0][0]
-#						number = col_comp[position]
-#
-#						if number == 2:
-#							number = tup[col[position]]
-#							return [(position, j, number)]
-#						elif col[position] == 2:
-#							number = tup[col_comp[position]]
-#							return [(position, i, number)]
-
-		for (row, col) in board.free_positions():
-			for number in (0, 1):
-				action = (row, col, number)
-				if board.is_valid_play(action):
-					actions.append(action)
-
-		# Degree heuristic
-#		actions.sort(key=lambda tup: board.restrictions(tup[0], tup[1]),
-#		             reverse=True)
+		for i in range(board.dimension):
+			for j in range(board.dimension):
+				if board.get_number(i, j) == 2:
+					return [(i, j, 0), (i, j, 1)]
 
 		return actions
 
@@ -330,20 +233,9 @@ class Takuzu(Problem):
 		"""Heuristic for A*."""
 		return len(node.state.board.free_positions())
 
-	# TODO: outros metodos da classe
-
 
 if __name__ == "__main__":
 	board = Board.parse_instance_from_stdin()
 
-	searchers = [
-	    astar_search,
-	    breadth_first_tree_search,
-	    depth_first_tree_search,
-	    greedy_search,
-	]
-
 	node = depth_first_tree_search(Takuzu(board))
-
-	if node != None:
-		print(node.state.board)
+	print(node.state.board)
