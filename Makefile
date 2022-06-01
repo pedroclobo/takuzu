@@ -1,3 +1,5 @@
+all:: tests
+
 tests:: 
 	@$(MAKE) $(MFLAGS) -C tests
 
