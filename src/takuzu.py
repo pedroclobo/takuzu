@@ -147,10 +147,10 @@ class Board:
 		def uniqueness_rule(board):
 			"""Check if all rows are different and if all columns are different."""
 			return len(np.unique(board.board, axis=0)) == board.dimension and \
-	     	       len(np.unique(board.board.T, axis=0)) == board.dimension
+			       len(np.unique(board.board.T, axis=0)) == board.dimension
 
 		return is_full(self) and equality_rule(self) and \
-               adjacency_rule(self) and uniqueness_rule(self)
+		       adjacency_rule(self) and uniqueness_rule(self)
 
 
 class Takuzu(Problem):
