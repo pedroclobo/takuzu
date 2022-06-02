@@ -2,7 +2,7 @@
 # 99079 Guilherme Pascoal
 # 99115 Pedro Lobo
 
-from sys import stdin
+import sys
 import numpy as np
 from search import (
     Problem,
@@ -100,7 +100,7 @@ class Board:
 		board = []
 
 		while dimension > 0:
-			board.append([int(x) for x in stdin.readline().split("\t")])
+			board.append([int(x) for x in sys.stdin.readline().split("\t")])
 			dimension -= 1
 
 		return Board(board)
