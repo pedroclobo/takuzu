@@ -4,7 +4,6 @@
 
 from sys import stdin
 import numpy as np
-from random import randint
 from search import (
     Problem,
     Node,
