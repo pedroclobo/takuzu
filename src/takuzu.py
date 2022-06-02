@@ -159,11 +159,12 @@ class Takuzu(Problem):
 		"""Return a collection of actions which can be executed from the given state."""
 
 		def infer_number(board, row, col):
-			if board.adjacent_horizontal_numbers(row, col).count(0) == 2 or \
-			   board.adjacent_vertical_numbers(row, col).count(0) == 2:
+			adjacent_h = board.adjacent_horizontal_numbers(i, j)
+			adjacent_v = board.adjacent_vertical_numbers(i, j)
+
+			if adjacent_h.count(0) == 2 or adjacent_v.count(0) == 2:
 				return 1
-			elif board.adjacent_horizontal_numbers(row, col).count(1) == 2 or \
-			     board.adjacent_vertical_numbers(row, col).count(1) == 2:
+			elif adjacent_h.count(1) == 2 or adjacent_v.count(1) == 2:
 				return 0
 
 			if board.vector_count(row, 0, True) >= board.dimension / 2 or \
@@ -180,23 +181,29 @@ class Takuzu(Problem):
 		for i in range(board.dimension):
 			for j in range(board.dimension):
 				if board.get_number(i, j) == 0:
-					if board.adjacent_horizontal_numbers(i, j) == (2, 0):
+					adjacent_h = board.adjacent_horizontal_numbers(i, j)
+					adjacent_v = board.adjacent_vertical_numbers(i, j)
+
+					if adjacent_h == (2, 0):
 						return [(i, j - 1, 1)]
-					elif board.adjacent_horizontal_numbers(i, j) == (0, 2):
+					elif adjacent_h == (0, 2):
 						return [(i, j + 1, 1)]
-					elif board.adjacent_vertical_numbers(i, j) == (2, 0):
+					elif adjacent_v == (2, 0):
 						return [(i + 1, j, 1)]
-					elif board.adjacent_vertical_numbers(i, j) == (0, 2):
+					elif adjacent_v == (0, 2):
 						return [(i - 1, j, 1)]
 
 				elif board.get_number(i, j) == 1:
-					if board.adjacent_horizontal_numbers(i, j) == (2, 1):
+					adjacent_h = board.adjacent_horizontal_numbers(i, j)
+					adjacent_v = board.adjacent_vertical_numbers(i, j)
+
+					if adjacent_h == (2, 1):
 						return [(i, j - 1, 0)]
-					elif board.adjacent_horizontal_numbers(i, j) == (1, 2):
+					elif adjacent_h == (1, 2):
 						return [(i, j + 1, 0)]
-					elif board.adjacent_vertical_numbers(i, j) == (2, 1):
+					elif adjacent_v == (2, 1):
 						return [(i + 1, j, 0)]
-					elif board.adjacent_vertical_numbers(i, j) == (1, 2):
+					elif adjacent_v == (1, 2):
 						return [(i - 1, j, 0)]
 
 				elif board.get_number(i, j) == 2:
