@@ -4,6 +4,7 @@
 
 from sys import stdin
 import numpy as np
+from random import randint
 from search import (
     Problem,
     Node,
@@ -178,8 +179,8 @@ class Takuzu(Problem):
 
 		board = state.board
 
-		for i in range(board.dimension):
-			for j in range(board.dimension):
+		for i in range(board.dimension - 1, -1, -1):
+			for j in range(board.dimension - 1, -1, -1):
 				if board.get_number(i, j) == 0:
 					adjacent_h = board.adjacent_horizontal_numbers(i, j)
 					adjacent_v = board.adjacent_vertical_numbers(i, j)
@@ -211,8 +212,8 @@ class Takuzu(Problem):
 					if number != None:
 						return [(i, j, number)]
 
-		for i in range(board.dimension):
-			for j in range(board.dimension):
+		for i in range(board.dimension - 1, -1, -1):
+			for j in range(board.dimension - 1, -1, -1):
 				if board.get_number(i, j) == 2:
 					return [(i, j, 0), (i, j, 1)]
 
