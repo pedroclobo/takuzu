@@ -29,7 +29,7 @@ class TakuzuState:
 class Board:
 	"""Internal representation of Takuzu board."""
 
-	def __init__(self, board, free_positions=None):
+	def __init__(self, board):
 		self.board = np.array(board)
 		self.dimension = len(self.board)
 
@@ -74,6 +74,15 @@ class Board:
 
 		return (first, sec)
 
+	def check_adjacency(self, row, col):
+		number = self.get_number(row, col)
+
+		if self.adjacent_horizontal_numbers(row, col).count(number) == 2 or \
+		   self.adjacent_vertical_numbers(row, col).count(number) == 2:
+			return False
+
+		return True
+
 	def vector_count(self, index, el, row):
 		"""Count the number of occurrences of an element in a row or column."""
 		return np.count_nonzero(self.board[index, ] == el) if row else \
@@ -91,7 +100,7 @@ class Board:
 		board = []
 
 		while dimension > 0:
-			board += [[int(x) for x in stdin.readline().strip().split("\t")]]
+			board.append([int(x) for x in stdin.readline().split("\t")])
 			dimension -= 1
 
 		return Board(board)
@@ -103,62 +112,48 @@ class Board:
 			"""Check if board in completely filled."""
 			return np.count_nonzero(self.board == 2) == 0
 
-		def equality_rule(board):
+		def equality_rule(self):
 			"""Check if specified row or column has an equal amount of 0 and 1,
 			or an amount differing by 1 if the board's dimension is odd."""
-			for i in range(board.dimension):
-				zeros = np.count_nonzero(board.board[i, ] == 0)
-				ones = np.count_nonzero(board.board[i, ] == 1)
+			for i in range(self.dimension):
+				zeros_row = self.vector_count(i, 0, True)
+				ones_row = self.vector_count(i, 1, True)
+				zeros_col = self.vector_count(i, 0, False)
+				ones_col = self.vector_count(i, 1, False)
 
-				if board.dimension % 2 == 0:
-					if zeros != ones:
+				if self.dimension % 2 == 0:
+					if zeros_row != ones_row or zeros_col != ones_col:
 						return False
 				else:
-					if zeros != ones + 1 and zeros + 1 != ones:
-						return False
-
-			for j in range(board.dimension):
-				zeros = np.count_nonzero(board.board[:, j] == 0)
-				ones = np.count_nonzero(board.board[:, j] == 1)
-
-				if board.dimension % 2 == 0:
-					if zeros != ones:
-						return False
-				else:
-					if zeros != ones + 1 and zeros + 1 != ones:
+					if (zeros_row != ones_row + 1 and zeros_row + 1 != ones_row) or \
+					   (zeros_col != ones_col + 1 and zeros_col + 1 != ones_col):
 						return False
 
 			return True
 
-		def adjacency_rule(board):
+		def adjacency_rule(self):
 			"""Check if there aren't more than 2 adjacent numbers."""
-			for i in range(board.dimension):
-				for j in range(board.dimension):
-					number = board.get_number(i, j)
-					adjacent_h = board.adjacent_horizontal_numbers(i, j)
-					adjacent_v = board.adjacent_vertical_numbers(i, j)
-
-					if (adjacent_h + (number, )).count(number) == 3 or \
-					   (adjacent_v + (number, )).count(number) == 3:
+			for i in range(self.dimension):
+				for j in range(self.dimension):
+					if self.check_adjacency(i, j) == False:
 						return False
 
 			return True
 
-		def uniqueness_rule(board):
+		def uniqueness_rule(self):
 			"""Check if all rows are different and if all columns are different."""
-			return len(np.unique(board.board, axis=0)) == board.dimension and \
-			       len(np.unique(board.board.T, axis=0)) == board.dimension
+			return len(np.unique(self.board, axis=0)) == self.dimension and \
+			       len(np.unique(self.board.T, axis=0)) == self.dimension
 
-		return is_full(self) and equality_rule(self) and \
-		       adjacency_rule(self) and uniqueness_rule(self)
+		return is_full(self) and uniqueness_rule(self) and \
+		       equality_rule(self) and adjacency_rule(self)
 
 
 class Takuzu(Problem):
 
 	def __init__(self, board: Board):
 		"""Constructor specifies initial state."""
-		super().__init__(TakuzuState(board))
-		self.state = TakuzuState(board)
+		self.initial = TakuzuState(board)
 
 	def actions(self, state: TakuzuState):
 		"""Return a collection of actions which can be executed from the given state."""
@@ -180,8 +175,7 @@ class Takuzu(Problem):
 
 			return None
 
-		actions = []
-		board = state.get_board()
+		board = state.board
 
 		for i in range(board.dimension):
 			for j in range(board.dimension):
@@ -215,7 +209,7 @@ class Takuzu(Problem):
 				if board.get_number(i, j) == 2:
 					return [(i, j, 0), (i, j, 1)]
 
-		return actions
+		return []
 
 	def result(self, state: TakuzuState, action):
 		"""Returns the state obtained from executing 'action' in 'state'."""
