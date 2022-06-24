@@ -1,0 +1,64 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{setspace}
+
+\title{Inteligência Artificial - Projeto}
+\author{Grupo 41}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\setstretch{1.5}
+
+\section{Introdução}
+Este projeto da unidade curricular de Inteligência Artificial tem como objetivo
+desenvolver um programa em \emph{Python} que resolva o problema
+\href{https://en.wikipedia.org/wiki/Takuzu}{Takuzu} utilizando técnicas de
+procura de IA.
+
+\section{Resolução de Problemas}
+\subsection{Problema de Satisfação de Restrições}
+Dada a natureza restritiva do \emph{Takuzu}, decidimos modelar o jogo como um
+problema de satisfação de restrições, com o objetivo de reduzir o
+\emph{branching factor} da árvore de procura.
+
+Primeiramente, definimos as variáveis como cada uma das posições do tabuleiro.
+O domínio de cada uma das variáveis está contido no conjunto $\{0, 1\}$.
+As variáveis que representam as posições livres (denominadas
+\textbf{variáveis livres}), apresentam esse mesmo domínio, enquanto que as
+variáveis que representam uma posição já ocupada têm um domínio unitário,
+correspondente ao valor dessa posição.
+
+Durante a procura, são utilizadas as restrições do jogo, listadas no enunciado,
+procurando reduzir os domínios da variáveis livres. Sempre que uma variável
+livre vê o tamanho do seu domínio reduzido a 1, a ação correspondente é retornada,
+na função \texttt{actions()}. Ao selecionarmos a variável com menor domínio,
+estamos a aplicar a heurística dos \textbf{Valores Remanescentes Mínimos}.
+
+Quando, a partir das restrições, não podemos realizar nenhuma inferência, de
+modo a reduzir o domínio das variáveis livres, vê-mo-nos obrigados a explorar as
+duas possibilidades para os valores daquela posição. Assim, retornamos o
+conjunto das duas ações correspondentes aos valores 0 e 1, fazendo com que a
+procura \emph{explore} as duas possibilidades.
+
+É importante notar que, a cada nível de profundidade da árvore de procura,
+apenas atribuímos valores a uma única variável, visto que a ordem de atribuição
+neste problema é indiferente. Mais explicitamente, atribuir o valor 1 à variável
+A e depois o valor 0 à variável B é equivalente a atribuir o valor 0 à variável
+B e depois atribuir o valor 1 à variável A.
+
+Todos os procedimentos listados acima contribuiram imenso para reduzir o número
+de nós gerados, durante a procura.
+
+\subsection{Heurísticas}
+A função heurística por nós implementada corresponde ao número de posições
+livres no tabuleiro. Esta é uma heurística admissível, pois nunca sobrestima
+o custo de chegar ao objetivo.
+
+
+\section{Comparação de Procuras}
+
+\end{document}
