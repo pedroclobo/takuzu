@@ -1,7 +1,10 @@
 \documentclass[12pt]{article}
 \usepackage[a4paper, margin=1in]{geometry}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{setspace}
+
+\graphicspath{ {../benchmarks/} }
 
 \title{Inteligência Artificial - Projeto}
 \author{Grupo 41}
@@ -60,5 +63,23 @@ o custo de chegar ao objetivo.
 
 
 \section{Comparação de Procuras}
+
+\subsection{Tempo de Execução}
+\begin{figure}[h!]
+\includegraphics{tempos}
+\centering
+\end{figure}
+
+\subsection{Nós Gerados}
+\begin{figure}[h!]
+\includegraphics{gerados}
+\centering
+\end{figure}
+
+\subsection{Nós Expandidos}
+\begin{figure}[h!]
+\includegraphics{expandidos}
+\centering
+\end{figure}
 
 \end{document}
