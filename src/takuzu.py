@@ -32,6 +32,7 @@ class Board:
 	def __init__(self, board):
 		self.board = np.array(board)
 		self.dimension = len(self.board)
+		self.n_free_positions = np.count_nonzero(self.board == 2)
 
 	def __str__(self):
 		"""Board representation."""
@@ -59,6 +60,7 @@ class Board:
 	def place_number(self, row: int, col: int, number: int):
 		"""Place number on board instance."""
 		self.board[row, col] = number
+		self.n_free_positions -= 1
 
 	def adjacent_vertical_numbers(self, row: int, col: int) -> (int, int):
 		"""Return values under and above the given position."""
@@ -92,6 +94,9 @@ class Board:
 		"""Return coordinates of free position."""
 		(row, col) = np.where(self.board == 2)
 		return list(zip(row, col))
+
+	def number_free_positions(self):
+		return self.n_free_positions
 
 	@staticmethod
 	def parse_instance_from_stdin():
@@ -232,7 +237,7 @@ class Takuzu(Problem):
 
 	def h(self, node: Node):
 		"""Heuristic for A*."""
-		return len(node.state.board.free_positions())
+		return node.state.board.number_free_positions()
 
 
 if __name__ == "__main__":
